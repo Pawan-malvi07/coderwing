@@ -8,32 +8,30 @@ require("dotenv").config();
 
 const register = async (req, res) => {
     try {
-      const { name, email, password, isAdmin } = req.body;
-  
-      if (!name || !email || !password) {
-        return res.status(400).json({ msg: "All fields are required" });
-      }
-  
-      const userExist = await Users.findOne({ email });
-      if (userExist) {
-        return res.status(400).json({ msg: "Email already exists" });
-      }
-  
-      const newUser = new Users({ name, email, password, isAdmin: isAdmin || false });
-      await newUser.save();
-  
-      res.status(201).json({
-        msg: "User registered successfully",
-        token: newUser.generateToken(),
-        userId: newUser._id.toString(),
-        isAdmin: newUser.isAdmin,
-      });
+        const { name, email, password, isAdmin } = req.body;
+
+        if (!name || !email || !password) {
+            return res.status(400).json({ msg: "All fields are required" });
+        }
+
+        const userExist = await Users.findOne({ email });
+        if (userExist) {
+            return res.status(400).json({ msg: "Email already exists" });
+        }
+
+        const userCreated = await Users.create({ name, email, password, isAdmin: isAdmin || false });
+
+        res.status(201).json({
+            msg: "User registered successfully",
+            token: userCreated.generateToken(),
+            userId: userCreated._id.toString(),
+            isAdmin: userCreated.isAdmin, 
+        });
     } catch (error) {
-      console.error("Error in Register API:", error);
-      res.status(500).json({ msg: "Internal Server Error" });
+        console.error("Error in Register API:", error);
+        res.status(500).json({ msg: "Internal Server Error" });
     }
-  };
-  
+};
 
 
 
