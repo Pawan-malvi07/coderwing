@@ -15,7 +15,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "https://coderwing1.betamxpertz.xyz"],
+    origin: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"],
     credentials: true,
   },
@@ -26,10 +26,7 @@ const onlineUsers = {};
 app.set("onlineUsers", onlineUsers); 
 
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://coderwing1.betamxpertz.xyz"
-  ],credentials: true
+  origin: true,credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
