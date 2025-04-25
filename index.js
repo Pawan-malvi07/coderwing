@@ -38,6 +38,9 @@ app.use("/api/auth", authRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/courses", courseRouter);
 
+app.get('/Dashboard', (req, res) => {
+  res.send('Welcome to the Dashboard!');
+});
 
 io.on("connection", (socket) => {
     console.log(`New client connected: ${socket.id}`);
