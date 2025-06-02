@@ -1,29 +1,21 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/user-model"); 
-require("dotenv").config();
 
-const authMiddleware = async (req, res, next) => {
-    try {
-        const token = req.header("Authorization");
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
 
-        if (!token) {
-            return res.status(401).json({ msg: "No token, authorization denied" });
-        }
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "No token provided" });
+  }
 
-        const cleanToken = token.startsWith("Bearer ") ? token.split(" ")[1] : token;
+  const token = authHeader.split(" ")[1];
 
-        const decoded = jwt.verify(cleanToken, process.env.JWT_SECRET); 
-
-        req.user = await User.findById(decoded.userId).select("-password");
-        if (!req.user) {
-            return res.status(401).json({ msg: "User not found" });
-        }
-
-        next();
-    } catch (error) {
-        console.error("Auth Middleware Error:", error);
-        res.status(401).json({ msg: "Token is not valid" });
-    }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // decoded contains userId, email, isAdmin
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
 };
 
-module.exports = authMiddleware;
+module.exports = verifyToken;

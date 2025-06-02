@@ -13,7 +13,8 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true,  
     },
-    
+      image: { type: String },
+
   
     password: {
         type: String,
@@ -46,10 +47,11 @@ userSchema.methods.generateToken = function () {
             email: this.email,
             isAdmin: this.isAdmin,
         },
-       'ritik111 ', 
+        process.env.JWT_SECRET,
         { expiresIn: "30d" }
     );
 };
+
 
 const Users = mongoose.models.Users || mongoose.model("Users", userSchema);
 module.exports = Users;

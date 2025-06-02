@@ -35,12 +35,13 @@ const path = require("path");
 const fs = require("fs");
 const { sendEmailRoute } = require("../controllers/sendEmail-controllers");
 const { getAllEvents, addEvent } = require("../controllers/Meeting"); 
+const verifyToken = require("../middleware/authMiddleware");
 
 
 
 router.get("/allevents", getAllEvents);
 router.post("/events", addEvent);
-router.post("/logout", logout); 
+router.post("/logout", verifyToken, logout); 
 
 router.post("/send-email", sendEmailRoute);
 router.post("/register", register);

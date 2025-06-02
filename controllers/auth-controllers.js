@@ -3,18 +3,21 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
+
 require("dotenv").config();
 
 
 const register = async (req, res) => {
     try {
         const { name, email, password, isAdmin } = req.body;
+        const cleanEmail = email?.trim().toLowerCase();
+
 
         if (!name || !email || !password) {
             return res.status(400).json({ msg: "All fields are required" });
         }
 
-        const userExist = await Users.findOne({ email });
+        const userExist = await Users.findOne({ email: cleanEmail });
         if (userExist) {
             return res.status(400).json({ msg: "Email already exists" });
         }
@@ -25,7 +28,7 @@ const register = async (req, res) => {
             msg: "User registered successfully",
             token: userCreated.generateToken(),
             userId: userCreated._id.toString(),
-            isAdmin: userCreated.isAdmin, 
+            isAdmin: userCreated.isAdmin,
         });
     } catch (error) {
         console.error("Error in Register API:", error);
@@ -34,36 +37,45 @@ const register = async (req, res) => {
 };
 
 
-
 const login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
+    const cleanEmail = email?.trim().toLowerCase();
 
-        if (!email || !password) {
-            return res.status(400).json({ msg: "Email and Password are required" });
-        }
-
-        const userExist = await Users.findOne({ email });
-        if (!userExist) {
-            return res.status(400).json({ msg: "Invalid email or password" });
-        }
-
-        const isMatch = await bcrypt.compare(password, userExist.password);
-        if (!isMatch) {
-            return res.status(401).json({ msg: "Invalid email or password" });
-        }
-
-        res.status(200).json({
-            msg: "Login successful",
-            token: userExist.generateToken(),
-            userId: userExist._id.toString(),
-            isAdmin: userExist.isAdmin, 
-        });
-    } catch (error) {
-        console.error("Error in Login API:", error);
-        res.status(500).json({ msg: "Internal Server Error" });
+    if (!email || !password) {
+      return res.status(400).json({ msg: "Email and Password are required" });
     }
+
+    const userExist = await Users.findOne({ email: cleanEmail });
+    if (!userExist) {
+      return res.status(400).json({ msg: "Invalid email or password" });
+    }
+
+    const isMatch = await bcrypt.compare(password, userExist.password);
+    if (!isMatch) {
+      return res.status(401).json({ msg: "Invalid email or password" });
+    }
+
+    const token = userExist.generateToken();
+
+    // ✅ Send full user info in response
+    res.status(200).json({
+      msg: "Login successful",
+      token,
+      user: {
+        _id: userExist._id,
+        name: userExist.name,
+        email: userExist.email,
+        image: userExist.image, // ✅ Make sure `image` is in schema
+        isAdmin: userExist.isAdmin,
+      },
+    });
+  } catch (error) {
+    console.error("Error in Login API:", error);
+    res.status(500).json({ msg: "Internal Server Error" });
+  }
 };
+
 
 
 
@@ -97,7 +109,8 @@ const forgetPassword = async (req, res) => {
         }
 
         const { email } = req.body;
-        const user = await Users.findOne({ email });
+        const cleanEmail = email?.trim().toLowerCase();
+        const user = await Users.findOne({ email: cleanEmail });
 
         if (!user) {
             return res.status(404).json({ msg: "User not found" });
@@ -108,7 +121,7 @@ const forgetPassword = async (req, res) => {
         user.resetTokenExpiration = Date.now() + 3600000;
         await user.save();
 
-        const resetLink = `https://coderwing1.betamxpertz.xyz/reset/${resetToken}`;
+        const resetLink = `${process.env.FRONTEND_URL}/reset/${resetToken}`;
         await transporter.sendMail({
             from: process.env.EMAIL_USER,
             to: user.email,
@@ -197,16 +210,38 @@ const getResetPasswordRequests = async (req, res) => {
 };
 
 
+
+
 const logout = async (req, res) => {
-    try {
-        res.status(200).json({ msg: "Logout successful" });
-    } catch (error) {
-        console.error("Error in Logout API:", error);
-        res.status(500).json({ msg: "Internal Server Error" });
+  try {
+    const authHeader = req.headers["authorization"];
+    if (!authHeader) {
+      return res.status(400).json({ message: "No token provided" });
     }
+
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+      return res.status(400).json({ message: "Token missing in header" });
+    }
+
+    try {
+      jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    // Since JWT is stateless, just respond success.
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 
 
 
-module.exports = { register, login, registerdata, forgetPassword, resetPassword , getForgetPasswordRequests , getResetPasswordRequests , logout  };
+
+
+
+module.exports = { register, login, registerdata, forgetPassword, resetPassword, getForgetPasswordRequests, getResetPasswordRequests, logout };
