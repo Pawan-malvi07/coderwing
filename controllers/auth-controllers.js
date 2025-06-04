@@ -102,12 +102,6 @@ const transporter = nodemailer.createTransport({
 
 const forgetPassword = async (req, res) => {
     try {
-        console.log("Received request body:", req.body);
-
-        if (!req.body) {
-            return res.status(400).json({ msg: "Request body is missing" });
-        }
-
         const { email } = req.body;
         const cleanEmail = email?.trim().toLowerCase();
         const user = await Users.findOne({ email: cleanEmail });
@@ -121,7 +115,10 @@ const forgetPassword = async (req, res) => {
         user.resetTokenExpiration = Date.now() + 3600000;
         await user.save();
 
-        const resetLink = `${process.env.FRONTEND_URL}/reset/${resetToken}`;
+        // ✅ Sanitize frontend URL to remove trailing slash
+        const frontendURL = process.env.FRONTEND_URL?.replace(/\/$/, "");
+        const resetLink = `${frontendURL}/reset/${resetToken}`;
+
         await transporter.sendMail({
             from: process.env.EMAIL_USER,
             to: user.email,
@@ -136,6 +133,7 @@ const forgetPassword = async (req, res) => {
         res.status(500).json({ msg: "Internal Server Error" });
     }
 };
+
 
 const resetPassword = async (req, res) => {
     try {
