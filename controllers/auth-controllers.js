@@ -228,7 +228,6 @@ const logout = async (req, res) => {
       return res.status(401).json({ message: "Invalid token" });
     }
 
-    // Since JWT is stateless, just respond success.
     res.status(200).json({ message: "Logged out successfully" });
   } catch (err) {
     console.error("Logout error:", err);
