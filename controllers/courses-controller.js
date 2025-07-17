@@ -106,4 +106,47 @@ const getCourseById = async (req, res) => {
   }
 };
  
-module.exports = { addCourse, getCourses ,getCourseById};
+const updateCourse = async (req, res) => {
+  try {
+    const { title, description } = req.body;
+
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ msg: "Course not found" });
+    }
+
+    if (title) course.title = title;
+    if (description) course.description = description;
+
+    if (req.file) {
+      const imageBase64 = req.file.buffer.toString("base64");
+      const imageData = `data:${req.file.mimetype};base64,${imageBase64}`;
+      course.image = imageData;
+    }
+
+    await course.save();
+
+    res.json({ msg: "Course updated successfully!", course });
+  } catch (error) {
+    console.error("Error updating course:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+const deleteCourse = async (req, res) => {
+  try {
+    const course = await Course.findByIdAndDelete(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({ msg: "Course not found" });
+    }
+
+    res.json({ msg: "Course deleted successfully!" });
+  } catch (error) {
+    console.error("Error deleting course:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+
+module.exports = { addCourse, getCourses ,getCourseById,updateCourse,deleteCourse};
