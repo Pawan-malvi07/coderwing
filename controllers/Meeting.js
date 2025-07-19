@@ -4,22 +4,9 @@ const getAllEvents = async (req, res) => {
   try {
     const now = new Date();
 
-    // Delete meetings that are in the past
-    await Event.deleteMany({
-      $expr: {
-        $lt: [
-          {
-            $dateFromString: {
-              dateString: { $concat: ["$date", "T", "$time"] }
-            }
-          },
-          now
-        ]
-      }
-    });
+    await Event.deleteMany({ datetime: { $lt: now } });
 
-    // Return only future or today's remaining events
-    const events = await Event.find();
+    const events = await Event.find().sort({ datetime: 1 }); 
     res.json(events);
 
   } catch (error) {
@@ -27,16 +14,27 @@ const getAllEvents = async (req, res) => {
   }
 };
 
-
 const addEvent = async (req, res) => {
-    const { title, date, time } = req.body;
-    try {
-        const newEvent = new Event({ title, date, time });
-        await newEvent.save();
-        res.status(201).json(newEvent);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+  const { title, date, time } = req.body;
+
+  try {
+    const datetime = new Date(`${date}T${time}`);
+
+    if (isNaN(datetime)) {
+      return res.status(400).json({ message: "Invalid date or time format." });
     }
+
+    if (datetime < new Date()) {
+      return res.status(400).json({ message: "Cannot create event in the past." });
+    }
+
+    const newEvent = new Event({ title, datetime });
+    await newEvent.save();
+    res.status(201).json(newEvent);
+
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 };
 
 module.exports = { getAllEvents, addEvent };
