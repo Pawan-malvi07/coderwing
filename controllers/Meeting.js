@@ -6,7 +6,7 @@ const getAllEvents = async (req, res) => {
 
     await Event.deleteMany({ datetime: { $lt: now } });
 
-    const events = await Event.find().sort({ datetime: 1 }); 
+    const events = await Event.find().sort({ datetime: 1 });
     res.json(events);
 
   } catch (error) {
@@ -36,5 +36,6 @@ const addEvent = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
 
 module.exports = { getAllEvents, addEvent };
