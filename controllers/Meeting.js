@@ -15,20 +15,20 @@ const getAllEvents = async (req, res) => {
 };
 
 const addEvent = async (req, res) => {
-  const { title, date, time } = req.body;
+  const { title, datetime } = req.body;
 
   try {
-    const datetime = new Date(`${date}T${time}`);
+    const eventTime = new Date(datetime);
 
-    if (isNaN(datetime)) {
-      return res.status(400).json({ message: "Invalid date or time format." });
+    if (isNaN(eventTime)) {
+      return res.status(400).json({ message: "Invalid datetime format." });
     }
 
-    if (datetime < new Date()) {
-      return res.status(400).json({ message: "Cannot create event in the past." });
+    if (eventTime < new Date()) {
+      return res.status(400).json({ message: "Cannot schedule event in the past." });
     }
 
-    const newEvent = new Event({ title, datetime });
+    const newEvent = new Event({ title, datetime: eventTime });
     await newEvent.save();
     res.status(201).json(newEvent);
 
