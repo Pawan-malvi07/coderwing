@@ -108,16 +108,22 @@ const getCourseById = async (req, res) => {
  
 const updateCourse = async (req, res) => {
   try {
-    const { title, description } = req.body;
+    const { title, description, duration, technology, tags, courseDescription } = req.body;
 
     const course = await Course.findById(req.params.id);
     if (!course) {
       return res.status(404).json({ msg: "Course not found" });
     }
 
+    // Update fields if they exist in req.body
     if (title) course.title = title;
     if (description) course.description = description;
+    if (duration) course.duration = duration;
+    if (technology) course.technology = technology;
+    if (tags) course.tags = tags;
+    if (courseDescription) course.courseDescription = courseDescription;
 
+    // If a new image is provided
     if (req.file) {
       const imageBase64 = req.file.buffer.toString("base64");
       const imageData = `data:${req.file.mimetype};base64,${imageBase64}`;
@@ -132,6 +138,7 @@ const updateCourse = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
+
 
 const deleteCourse = async (req, res) => {
   try {
